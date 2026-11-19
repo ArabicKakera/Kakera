@@ -6,6 +6,10 @@
     '<svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<path d="M6 12h4M8 10v4M15 11h.01M18 13h.01M17.3 5H6.7a4 4 0 0 0-3.9 3.1l-1.5 7A3 3 0 0 0 4.2 19a3 3 0 0 0 2.3-1.1L8 16h8l1.5 1.9a3 3 0 0 0 2.3 1.1 3 3 0 0 0 2.9-3.9l-1.5-7A4 4 0 0 0 17.3 5Z"/></svg>';
 
+  const INFO =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>';
+
   const $ = (sel, root) => (root || document).querySelector(sel);
 
   function el(tag, attrs) {
@@ -174,6 +178,31 @@
     draw();
   }
 
+  /* ---------- عناصر المقال (فقرة، عنوان، قائمة...) ---------- */
+  function block(b) {
+    if (typeof b === 'string') return el('p', { text: b });
+    if (b.h) return el('h2', { text: b.h });
+    if (b.h3) return el('h3', { text: b.h3 });
+    if (b.note) return el('p', { class: 'note', text: b.note });
+    if (b.small) return el('p', { class: 'small', text: b.small });
+    if (b.list) return el('ul', {}, ...b.list.map((t) => el('li', { text: t })));
+    if (b.ol) return el('ol', {}, ...b.ol.map((t) => el('li', { text: t })));
+    if (b.box) {
+      const title = el('h2', { class: 'callout-title' });
+      title.insertAdjacentHTML('beforeend', INFO);
+      title.append(b.box.title);
+      return el('aside', { class: 'callout' }, title, ...b.box.blocks.map(block));
+    }
+    if (b.rows) {
+      return el('div', { class: 'rows' }, ...b.rows.map((r) =>
+        r.length < 2
+          ? el('div', {}, el('span', { class: 'v', text: r[0] }))
+          : el('div', {}, el('span', { class: 'k', text: r[0] }), el('span', { class: 'v', text: r[1] }))
+      ));
+    }
+    return null;
+  }
+
   /* ---------- صفحة المقال ---------- */
   function initGame() {
     const root = $('#game-root');
@@ -199,7 +228,7 @@
         el('h1', { text: 'تعريب ' + g.title }),
         el('p', { class: 'meta', text: metaLine })
       ),
-      el('div', { class: 'prose' }, ...(g.description || []).map((t) => el('p', { text: t })))
+      el('div', { class: 'prose' }, ...(g.description || []).map(block))
     );
 
     if (g.screenshots && g.screenshots.length) {
